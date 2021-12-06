@@ -25,20 +25,11 @@ start_time = dt.datetime.now()
 my_instrument = Model372(9600, ip_address = '169.254.25.66')
 
 
+
 #ENTER CUSTOM FILENAME
 #OR 
 #LEAVE EMPTY ('') and a name will be generated based on today's date
 filename = ''
-
-'''
-#Initialize Heater with Closed_Loop setting (Without this step, heater will not turn on)
-Closed_Loop_Settings = Model372HeaterOutputSettings( output_mode = Model372OutputMode.CLOSED_LOOP, 
-                                            input_channel = 6, powerup_enable = True, 
-                                            reading_filter = False, delay = 1, 
-                                            polarity = Model372Polarity.UNIPOLAR)
-my_instrument.configure_heater(0, Closed_Loop_Settings)
-'''
-
 
 
 
@@ -56,12 +47,10 @@ OPEN_LOOP          =      False               #Simply turns on heater to a const
 channels           =      [6]                 # (MUST BE AN ARRAY) Which lakeshore channels to read 
 innerloop_wait     =      3                   # (MUST BE AN INT) Wait time (seconds) between individual data points
 
-
 setpoint           =      [0.010]             # Must be in Kelvin,         only used during CLOSED LOOP 
 setpoint_ramprate  =      [10]                # Kevlin/Min Ramp Rate,      only used during CLOSED LOOP           
 loop_runtime       =      [30]               # Length (Minutes) of each loop
 newloop_wait       =      [5]                 # Wait time (seconds) before taking data from a new loop
-
 
 heater_range       =      [0]       #See dictionary below for values
 '''                                Dictionary of heater_range values...
@@ -75,6 +64,7 @@ heater_range       =      [0]       #See dictionary below for values
 #                                       31.6mA    :    7
 #                                       100mA     :    8
 '''
+
 
 P                  =      [60]           ; '''PID is for CLOSED LOOP PID'''         
 I                  =      [30]           #(MUST BE AN ARRAY) same length as loop_runtime
