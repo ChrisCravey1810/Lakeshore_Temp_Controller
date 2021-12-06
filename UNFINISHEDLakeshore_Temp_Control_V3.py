@@ -24,8 +24,7 @@ start_time = dt.datetime.now()
 '''
 my_instrument = Model372(9600, ip_address = '169.254.110.0')
 
-print("oof")
-print("hot diggidy")
+print("I do be changing things")
 #ENTER CUSTOM FILENAME
 #OR 
 #LEAVE EMPTY ('') and a name will be generated based on today's date
