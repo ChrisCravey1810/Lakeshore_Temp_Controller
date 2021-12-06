@@ -22,7 +22,7 @@ start_time = dt.datetime.now()
 ####          after, copy ip_adress from "View IP_Config <Submenu>"
 ####          into my_instrument below.
 '''
-my_instrument = Model372(9600, ip_address = '169.254.110.0')
+my_instrument = Model372(9600, ip_address = '169.254.25.66')
 
 
 #ENTER CUSTOM FILENAME
@@ -45,25 +45,25 @@ my_instrument.configure_heater(0, Closed_Loop_Settings)
 
 #CHOOSE HEATER TYPE
 #Choose if you want to control heater via PID or manual heater percentages
-CLOSED_LOOP_PID    =      True
-OPEN_LOOP          =      False
+
+CLOSED_LOOP_PID    =      True                #Utilizes PID settings and a given setpoint/ramp rate
+OPEN_LOOP          =      False               #Simply turns on heater to a constant user set power percentage, no setpoint
 
 
 
 #SET PARAMETERS
 
-channels           =      [6]             # (MUST BE AN ARRAY) Which lakeshore channels to read 
-innerloop_wait     =      3               # (MUST BE AN INT) Wait time (seconds) between individual data points
+channels           =      [6]                 # (MUST BE AN ARRAY) Which lakeshore channels to read 
+innerloop_wait     =      3                   # (MUST BE AN INT) Wait time (seconds) between individual data points
 
 
-'''DO YOU DO SETPOINT FOR OPEN LOOP?'''
-setpoint           =      [0.010]         # Must be in Kelvin
-setpoint_ramprate  =      [0.010]         # Kevlin/Min Ramp Rate           
-loop_runtime       =      [400]           # Length (Minutes) of each loop
-newloop_wait       =      [5]             # Wait time (seconds) before taking data from a new loop
+setpoint           =      [0.010]             # Must be in Kelvin,         only used during CLOSED LOOP 
+setpoint_ramprate  =      [10]                # Kevlin/Min Ramp Rate,      only used during CLOSED LOOP           
+loop_runtime       =      [30]               # Length (Minutes) of each loop
+newloop_wait       =      [5]                 # Wait time (seconds) before taking data from a new loop
 
 
-heater_range       =      [0]             #See dictionary below for values
+heater_range       =      [0]       #See dictionary below for values
 '''                                Dictionary of heater_range values...
 #                                       OFF       :    0
 #                                       31.6uA    :    1
@@ -81,7 +81,7 @@ I                  =      [30]           #(MUST BE AN ARRAY) same length as loop
 D                  =      [6]            
 
 
-manual_output      =      [10]           ; '''manual_output is for OPEN LOOP'''          
+manual_output      =      [15]           ; '''manual_output is for OPEN LOOP'''          
                                          #(MUST BE AN ARRAY) should be percentage (0 - 100) of heater power desired
 
 
@@ -91,13 +91,13 @@ manual_output      =      [10]           ; '''manual_output is for OPEN LOOP'''
 assert(isinstance(CLOSED_LOOP_PID, bool)),      "CLOSED_LOOP_PID must be True/False"
 assert(isinstance(OPEN_LOOP, bool)),            "OPEN_LOOP must be True/False"
 assert(CLOSED_LOOP_PID != OPEN_LOOP),           "Either OPEN_LOOP or CLOSED_LOOP must be True"
-if OPEN_LOOP == True:
+if CLOSED_LOOP_PID == True:
     assert(len(setpoint)==len(setpoint_ramprate)==len(loop_runtime)==len(newloop_wait)==len(P)==len(I)==len(D)==len(heater_range)), \
-                                                "Make sure that (setpoint, loop_runtime, newloop_wait, P, I, D, and heater_range all are LISTS with equal length)"
+                                                "Make sure that (setpoint, loop_runtime, newloop_wait, P, I, D, and heater_range) all are LISTS with equal length"
 else:
-    assert(len(setpoint)==len(setpoint_ramprate)==len(loop_runtime)==len(newloop_wait)==len(manual_output)==len(heater_range)), \
-                                                "Make sure that (setpoint, loop_runtime, newloop_wait, manual_ouput, and heater_range all are LISTS with equal length)"
-assert(isinstance(channels, list)),             "'channels' variable must be a list"  
+    assert(len(loop_runtime)==len(newloop_wait)==len(manual_output)==len(heater_range)), \
+                                                "Make sure that (setpoint, loop_runtime, newloop_wait, manual_ouput, and heater_range) all are LISTS with equal length"
+assert(isinstance(channels, list) & isinstance(channels[0], int)),             "'channels' variable must be a list containing integer(s)"  
 assert(isinstance(innerloop_wait, int)),        "'innerloop_wait' variable must be an int"
 
 
@@ -250,9 +250,8 @@ with open(filename, 'w', newline='') as file:
             
         if OPEN_LOOP == True:
             my_instrument.set_manual_output(0, manual_output[j])
-            my_instrument.set_setpoint_ramp_parameter(0, setpoint[j])
             print("Using OPEN LOOP settings")
-            print("Manual output set to: ", my_instrument.get_manual_output())
+            print("Manual output set to: ", my_instrument.get_manual_output(0), " percent")
             
         
       
@@ -270,10 +269,6 @@ with open(filename, 'w', newline='') as file:
 
 print('\n\n\nAll loops complete...')
 
-
-
-#SAVE FIGURE
-#fig.savefig(str(filename[:-4] + '.png'))    #replace .csv with .png
 
 #plt.close()
 
