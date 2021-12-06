@@ -24,51 +24,46 @@ start_time = dt.datetime.now()
 '''
 my_instrument = Model372(9600, ip_address = '169.254.110.0')
 
-'''update'''
+
 #ENTER CUSTOM FILENAME
 #OR 
 #LEAVE EMPTY ('') and a name will be generated based on today's date
 filename = ''
 
-
+'''
 #Initialize Heater with Closed_Loop setting (Without this step, heater will not turn on)
 Closed_Loop_Settings = Model372HeaterOutputSettings( output_mode = Model372OutputMode.CLOSED_LOOP, 
                                             input_channel = 6, powerup_enable = True, 
                                             reading_filter = False, delay = 1, 
                                             polarity = Model372Polarity.UNIPOLAR)
 my_instrument.configure_heater(0, Closed_Loop_Settings)
+'''
 
 
 
 
 
-# SET PARAMETERS
+#CHOOSE HEATER TYPE
 #Choose if you want to control heater via PID or manual heater percentages
 CLOSED_LOOP_PID    =      True
 OPEN_LOOP          =      False
 
 
 
-
+#SET PARAMETERS
 
 channels           =      [6]             # (MUST BE AN ARRAY) Which lakeshore channels to read 
 innerloop_wait     =      3               # (MUST BE AN INT) Wait time (seconds) between individual data points
 
 
-
+'''DO YOU DO SETPOINT FOR OPEN LOOP?'''
 setpoint           =      [0.010]         # Must be in Kelvin
 setpoint_ramprate  =      [0.010]         # Kevlin/Min Ramp Rate           
 loop_runtime       =      [400]           # Length (Minutes) of each loop
 newloop_wait       =      [5]             # Wait time (seconds) before taking data from a new loop
 
-P                  =      [60]                    
-I                  =      [30]            #(MUST BE AN ARRAY) same length as loop_runtime
-D                  =      [6]             #FOR CLOSED LOOP PID
-
-
 
 heater_range       =      [0]             #See dictionary below for values
-manual_output      =      [10]            #FOR OPEN LOOP: Percent value <= 100           
 '''                                Dictionary of heater_range values...
 #                                       OFF       :    0
 #                                       31.6uA    :    1
@@ -81,31 +76,39 @@ manual_output      =      [10]            #FOR OPEN LOOP: Percent value <= 100
 #                                       100mA     :    8
 '''
 
+P                  =      [60]           ; '''PID is for CLOSED LOOP PID'''         
+I                  =      [30]           #(MUST BE AN ARRAY) same length as loop_runtime
+D                  =      [6]            
+
+
+manual_output      =      [10]           ; '''manual_output is for OPEN LOOP'''          
+                                         #(MUST BE AN ARRAY) should be percentage (0 - 100) of heater power desired
+
+
  
 
 #Error catching when defining variables
 assert(isinstance(CLOSED_LOOP_PID, bool)),      "CLOSED_LOOP_PID must be True/False"
 assert(isinstance(OPEN_LOOP, bool)),            "OPEN_LOOP must be True/False"
 assert(CLOSED_LOOP_PID != OPEN_LOOP),           "Either OPEN_LOOP or CLOSED_LOOP must be True"
-
 if OPEN_LOOP == True:
-    
-    assert(len(setpoint)==len(loop_runtime)==len(newloop_wait)==len(P)==len(I)==len(D)==len(heater_range)), \
-                                                "Make sure that (setpoint, loop_runtime, newloop_wait, P, I, D, and heater_range all are lists with equal length)"
+    assert(len(setpoint)==len(setpoint_ramprate)==len(loop_runtime)==len(newloop_wait)==len(P)==len(I)==len(D)==len(heater_range)), \
+                                                "Make sure that (setpoint, loop_runtime, newloop_wait, P, I, D, and heater_range all are LISTS with equal length)"
+else:
+    assert(len(setpoint)==len(setpoint_ramprate)==len(loop_runtime)==len(newloop_wait)==len(manual_output)==len(heater_range)), \
+                                                "Make sure that (setpoint, loop_runtime, newloop_wait, manual_ouput, and heater_range all are LISTS with equal length)"
 assert(isinstance(channels, list)),             "'channels' variable must be a list"  
 assert(isinstance(innerloop_wait, int)),        "'innerloop_wait' variable must be an int"
 
 
 
-
+#Initialize either a closed loop or open loop heater (Without this step, heater will not turn on)
 if CLOSED_LOOP_PID == True:
-    #Initialize Heater with Closed_Loop setting (Without this step, heater will not turn on)
     Closed_Loop_Settings = Model372HeaterOutputSettings( output_mode = Model372OutputMode.CLOSED_LOOP, 
                                                 input_channel = 6, powerup_enable = True, 
                                                 reading_filter = False, delay = 1, 
                                                 polarity = Model372Polarity.UNIPOLAR)
     my_instrument.configure_heater(0, Closed_Loop_Settings)
-
 
 
 if OPEN_LOOP == True:
@@ -119,19 +122,6 @@ if OPEN_LOOP == True:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 #Search Lakeshore Data for the same filename and increment if it already exists
 def run_number(filename):
     run = 1
@@ -139,7 +129,8 @@ def run_number(filename):
         run += 1
     return filename % run
 
-#If left empty the file will automatically be named "LakeshoreTemp" + (Today's Date)_ run number
+
+#If filename = '', the file will automatically be named "LakeshoreTemp" + (Today's Date)_ run number
 if len(filename) == 0:
     filename = str('Lakeshore Data/LakeshoreTemp(' + start_time.strftime('%m') + '-' +\
                    start_time.strftime('%d') + '-' + start_time.strftime('%y') + ')_%s.csv')
@@ -259,6 +250,7 @@ with open(filename, 'w', newline='') as file:
             
         if OPEN_LOOP == True:
             my_instrument.set_manual_output(0, manual_output[j])
+            my_instrument.set_setpoint_ramp_parameter(0, setpoint[j])
             print("Using OPEN LOOP settings")
             print("Manual output set to: ", my_instrument.get_manual_output())
             
